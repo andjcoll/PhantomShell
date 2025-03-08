@@ -41,6 +41,10 @@ struct Args {
     #[arg(long, alias = "type")]
     cat: Option<String>,
 
+    /// Prints the disk usage
+    #[arg(long, action = ArgAction::SetTrue)]
+    du: bool,
+
     /// Name of the VFS to create
     #[arg(required = false, index = 1, conflicts_with = "file")]
     vfs_name: Option<String>,
@@ -55,6 +59,15 @@ struct Args {
 fn main() {
     let args = Args::parse();
     let mut command = Args::command();
+
+    let flags = vec![args.du, args.cat.is_some(), args.dir];
+    let active_flags = flags.iter().filter(|&&x| x).count();
+
+    if active_flags > 1 {
+        command
+            .error(ErrorKind::ArgumentConflict, "Only use one command")
+            .exit();
+    }
 
     if let (Some(vfs_name), Some(size_one), Some(size_two)) = (&args.vfs_name, args.rows, args.cols)
     {
@@ -117,6 +130,9 @@ fn main() {
             Ok(out) => println!("{}", out),
             Err(err) => command.error(ErrorKind::ValueValidation, err).exit(),
         }
+    } else if args.du {
+        let disk_usage = vfs.disk_usage();
+        println!("{}", disk_usage);
     } else {
         print!("{}", vfs.print());
     }

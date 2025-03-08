@@ -219,4 +219,54 @@ impl VFS {
 
         Ok(String::from_utf8_lossy(&data).to_string())
     }
+
+    pub fn disk_usage(&self) -> String {
+        let mut used = 0;
+        let mut available = 0;
+        let mut bad = 0;
+        let total = self.blocks.len();
+
+        for block in &self.blocks {
+            match block {
+                Block::Empty(_) => available += 1,
+                Block::Damaged(_) => bad += 1,
+                _ => used += 1,
+            }
+        }
+
+        let mut usage = String::new();
+        usage.push_str("Disk usage:\n");
+
+        usage.push_str(&format!(
+            "{:<10} {:>5} {:>7}\n",
+            "State", "Count", "Percent"
+        ));
+        usage.push_str(&format!(
+            "{:<10} {:>5} {:>7}\n",
+            "Used",
+            used,
+            100 * used / total
+        ));
+        usage.push_str(&format!(
+            "{:<10} {:>5} {:>7}\n",
+            "Avail",
+            available,
+            100 * available / total
+        ));
+        usage.push_str(&format!(
+            "{:<10} {:>5} {:>7}\n",
+            "Bad",
+            bad,
+            100 * bad / total
+        ));
+
+        usage.push_str(&format!("Total number of clusters: {}\n", total));
+        usage.push_str(&format!("Total number used: {}\n", used));
+
+        if available == 0 {
+            usage.push_str("**Disk Full**");
+        }
+
+        usage
+    }
 }
