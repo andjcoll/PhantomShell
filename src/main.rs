@@ -22,7 +22,7 @@ use clap::Parser;
 )]
 struct Args {
     /// Input file (-f filename)
-    #[arg(short = 'f', long)]
+    #[arg(short = 'f', long, conflicts_with = "vfs_name")]
     file: Option<String>,
 
     /// Print help
@@ -36,11 +36,51 @@ struct Args {
     /// Lists all files on the disk
     #[arg(long, action = ArgAction::SetTrue)]
     dir: bool,
+
+    /// Prints the contents of a file to standard output
+    #[arg(long, alias = "type")]
+    cat: Option<String>,
+
+    /// Name of the VFS to create
+    #[arg(required = false, index = 1, conflicts_with = "file")]
+    vfs_name: Option<String>,
+
+    #[arg(required = false, index = 2, conflicts_with = "file")]
+    rows: Option<usize>,
+
+    #[arg(required = false, index = 3, conflicts_with = "file")]
+    cols: Option<usize>,
 }
 
 fn main() {
     let args = Args::parse();
     let mut command = Args::command();
+
+    if let (Some(vfs_name), Some(size_one), Some(size_two)) = (&args.vfs_name, args.rows, args.cols)
+    {
+        if size_two % 2 != 0 {
+            command
+                .error(
+                    ErrorKind::ValueValidation,
+                    "cols value must be divisible by 2",
+                )
+                .exit();
+        }
+
+        let vfs = VFS::new(&vfs_name, size_one, size_two);
+        match vfs {
+            Ok(vfs) => println!("{}", vfs.print()),
+            Err(err) => command.error(ErrorKind::ValueValidation, err).exit(),
+        }
+        return;
+    } else if args.vfs_name.is_some() || args.rows.is_some() || args.cols.is_some() {
+        command
+            .error(
+                ErrorKind::ValueValidation,
+                "All three arguments (vfs_name, rows, cols) must be provided together.",
+            )
+            .exit();
+    }
 
     let input = if let Some(file) = args.file {
         match read_to_string(&file) {
@@ -69,7 +109,13 @@ fn main() {
 
     if args.dir {
         for file in vfs.get_files() {
-            println!("{}", file);
+            println!("{}", file.0);
+        }
+    } else if let Some(file) = args.cat {
+        let out = vfs.cat_file(&file);
+        match out {
+            Ok(out) => println!("{}", out),
+            Err(err) => command.error(ErrorKind::ValueValidation, err).exit(),
         }
     } else {
         print!("{}", vfs.print());
