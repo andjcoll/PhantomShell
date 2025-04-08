@@ -23,3 +23,6 @@ Cargo.lock
 #.idea/
 
 shell
+
+analysis/
+analysis.json

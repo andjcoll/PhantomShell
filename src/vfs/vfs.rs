@@ -190,7 +190,7 @@ impl VFS {
             Block::FileHeader(file_header) => {
                 next_data = file_header.next_data;
                 let curr_data = file_header.data.clone();
-                data.extend(&curr_data[..curr_data.len() - 1])
+                data.extend(&curr_data[..curr_data.len()])
             }
             _ => {
                 return Err(VFSError::FileNotFound);
