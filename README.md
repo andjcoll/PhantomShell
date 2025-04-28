@@ -1,6 +1,6 @@
-# vfs_shell
+# PhantomShell
 
-A mock CLI shell for reading and acting upon a virtual file system.
+A mock CLI shell for reading and acting upon a virtual file system (VFS).
 
 ## Usage
 
@@ -13,13 +13,25 @@ shell --help
 Output the VFS:
 
 ```cli
-shell -f file.vfs
+shell -f <VFS>
 ```
 
 List the files in the VFS:
 
 ```cli
-shell -f vile.vfs --dir
+shell -f <VFS> --dir
+```
+
+Print the content of a file (in VFS) to standard output:
+
+```cli
+shell -f <VFS> --cat <FILENAME>
+```
+
+Print the disk usage of the VFS:
+
+```cli
+shell -f <VFS> --du
 ```
 
 ## Contributing
